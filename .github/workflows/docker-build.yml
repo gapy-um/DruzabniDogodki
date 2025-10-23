@@ -45,4 +45,4 @@ jobs:
 
           push: true
 
-          tags: elemzi/druzabni_dogodki:latest
+          tags: elemzi/druzabni_dogodki:latest, elemzi/druzabni_dogodki:${{ github.sha }}
