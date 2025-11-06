@@ -1,59 +1,42 @@
 name: Build and Push Docker Image v2
 
 on:
-    push:
-        branches:
-        - main
-        - master
-        
-        
+  push:
+    branches:
+      - main
+      - master
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout code
-
         uses: actions/checkout@v2
 
       - name: Set up Docker Buildx
-
         uses: docker/setup-buildx-action@v1
 
       - name: Login to Docker Hub
-
         uses: docker/login-action@v1
-
         with:
-
           username: ${{ secrets.DOCKER_USERNAME }}
-
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-
         uses: docker/build-push-action@v2
-
         with:
-
           context: .
-
           file: ./Dockerfile
-
           push: true
+          tags: elemzi/druzabni_dogodki:latest,elemzi/druzabni_dogodki:${{ github.sha }}
 
-          tags: elemzi/druzabni_dogodki:latest, elemzi/druzabni_dogodki:${{ github.sha }}
+      - name: Publish .NET app
+        run: dotnet publish --configuration Release --no-build --output "${{ github.workspace }}/publish"
 
-        - name: Publish
-          run: dotnet publish --configuration Release --no-build --output "${{ github.workspace }}/publish
-          
-          name: Deploy to Azure Web App
-          uses: azure/webapps-deploy@v2
-          with:
-            app-name: "main"
-            publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-            package: "${{ github.workspace }}/publish"
-          
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: "TVOJE_AZURE_APP_IME"
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: "${{ github.workspace }}/publish"
