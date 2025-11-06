@@ -32,7 +32,7 @@ jobs:
           tags: elemzi/druzabni_dogodki:latest,elemzi/druzabni_dogodki:${{ github.sha }}
 
       - name: Publish .NET app
-        run: dotnet publish --configuration Release --no-build --output "${{ github.workspace }}/publish"
+        run: dotnet publish DruzabniDogodki/DruzabniDogodki.csproj --configuration Release --no-build --output "${{ github.workspace }}/publish"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
