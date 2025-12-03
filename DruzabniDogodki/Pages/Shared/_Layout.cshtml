@@ -1,5 +1,5 @@
-﻿@using Microsoft.AspNetCore.Mvc.RazorPages
-@using System;
+﻿@using Microsoft.AspNetCore.Http
+@using System
 
 <!DOCTYPE html>
 <html lang="sl">
@@ -34,11 +34,15 @@
 </head>
 <body>
     @{
-        // Katera Razor stran je trenutno (npr. "/Index", "/Login", "/Register")
+        // na kateri strani smo ("/Index", "/Login", "/Register"...)
         var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
 
-        // Če smo na Login ali Register, skrij zgornje auth linke
-        bool hideAuthLinks =
+        // iz Session preberemo username (če obstaja)
+        var userName = Context.Session.GetString("UserName");
+        bool isLoggedIn = !string.IsNullOrEmpty(userName);
+
+        // smo na eni od auth strani?
+        bool onAuthPage =
         string.Equals(currentPage, "/Login", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(currentPage, "/Register", StringComparison.OrdinalIgnoreCase);
     }
@@ -72,9 +76,24 @@
                         </li>
                     </ul>
 
-                    <!-- DESNA STRAN (LOGIN / REGISTER) – skrij na /Login in /Register -->
-                    @if (!hideAuthLinks)
+                    <!-- DESNA STRAN MENIJA -->
+                    @if (isLoggedIn)
                     {
+                        <!-- uporabnik je prijavljen -->
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <span class="navbar-text me-3">
+                                    Pozdravljen, @userName
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-page="/Logout">Odjava</a>
+                            </li>
+                        </ul>
+                    }
+                    else if (!onAuthPage)
+                    {
+                        <!-- uporabnik NI prijavljen in NISMO na /Login ali /Register -->
                         <ul class="navbar-nav ms-auto">
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-page="/Login">Prijava</a>

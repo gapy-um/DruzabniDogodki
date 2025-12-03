@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Data.Sqlite;
 
 namespace DruzabniDogodki.Pages
 {
@@ -43,9 +44,41 @@ namespace DruzabniDogodki.Pages
                 return Page();
             }
 
-            // TODO: tukaj pride prava registracija – Identity / DB insert
+            // Povezava na SQLite bazo (db datoteka je v rootu projekta)
+            const string connectionString = "Data Source=druzabnidogodki.db";
 
-            // Zaenkrat samo redirect na login
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+
+            // 1) preveri, ali uporabniško ime že obstaja
+            const string checkSql = "SELECT COUNT(*) FROM Users WHERE UserName = $u";
+
+            using (var checkCmd = new SqliteCommand(checkSql, connection))
+            {
+                checkCmd.Parameters.AddWithValue("$u", Input.UserName);
+                var count = (long)(checkCmd.ExecuteScalar() ?? 0);
+
+                if (count > 0)
+                {
+                    ModelState.AddModelError(string.Empty, "Uporabniško ime je že zasedeno.");
+                    return Page();
+                }
+            }
+
+            // 2) vstavi novega uporabnika
+            const string insertSql =
+                "INSERT INTO Users (UserName, Email, Password) VALUES ($u, $e, $p)";
+
+            using (var insertCmd = new SqliteCommand(insertSql, connection))
+            {
+                insertCmd.Parameters.AddWithValue("$u", Input.UserName);
+                insertCmd.Parameters.AddWithValue("$e", Input.Email);
+                insertCmd.Parameters.AddWithValue("$p", Input.Password); // v realnosti: hash!
+
+                insertCmd.ExecuteNonQuery();
+            }
+
+            // 3) po uspešni registraciji na login
             return RedirectToPage("/Login");
         }
     }

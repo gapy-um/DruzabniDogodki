@@ -1,6 +1,10 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.ComponentModel.DataAnnotations;
+using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
+using Microsoft.AspNetCore.Http;
+
 
 namespace DruzabniDogodki.Pages
 {
@@ -40,18 +44,35 @@ namespace DruzabniDogodki.Pages
                 return Page();
             }
 
-            // TODO: Replace with real authentication logic (Identity, custom auth, etc.)
-            var isValidUser = string.Equals(Input.UserName, "demo", System.StringComparison.OrdinalIgnoreCase)
-                              && Input.Password == "demo";
+            const string connectionString = "Data Source=druzabnidogodki.db";
 
-            if (!isValidUser)
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+
+            const string sql = @"
+        SELECT UserName
+        FROM Users
+        WHERE UserName = $u AND Password = $p
+        LIMIT 1;";
+
+            using var cmd = new SqliteCommand(sql, connection);
+            cmd.Parameters.AddWithValue("$u", Input.UserName);
+            cmd.Parameters.AddWithValue("$p", Input.Password);
+
+            var result = cmd.ExecuteScalar();
+
+            if (result == null)
             {
                 ModelState.AddModelError(string.Empty, "Nepravilno uporabniško ime ali geslo.");
                 return Page();
             }
 
-            // Placeholder: on successful login redirect to ReturnUrl
+            // ? prijava uspela – zapišemo v Session
+            HttpContext.Session.SetString("UserName", Input.UserName);
+
+            // redirect na Index (ali ReturnUrl)
             return LocalRedirect(ReturnUrl!);
         }
+
     }
 }
