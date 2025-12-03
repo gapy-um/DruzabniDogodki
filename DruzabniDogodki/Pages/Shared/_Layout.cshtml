@@ -1,35 +1,94 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Mvc.RazorPages
+@using System;
+
+<!DOCTYPE html>
+<html lang="sl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - DruzabniDogodki</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/DruzabniDogodki.styles.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        /* Temen navbar, da se ujema z auth backgroundom */
+        .nav-main {
+            box-shadow: none;
+            border-bottom: none;
+            background-color: #020617;
+        }
+
+            .nav-main .navbar-brand,
+            .nav-main .nav-link {
+                color: #e5e7eb !important;
+            }
+
+                .nav-main .nav-link:hover {
+                    color: #ffffff !important;
+                }
+    </style>
 </head>
 <body>
+    @{
+        // Katera Razor stran je trenutno (npr. "/Index", "/Login", "/Register")
+        var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
+
+        // Če smo na Login ali Register, skrij zgornje auth linke
+        bool hideAuthLinks =
+        string.Equals(currentPage, "/Login", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(currentPage, "/Register", StringComparison.OrdinalIgnoreCase);
+    }
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-dark nav-main mb-3">
             <div class="container">
+
+                <!-- LOGO -->
                 <a class="navbar-brand" asp-area="" asp-page="/Index">DruzabniDogodki</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+
+                <!-- Mobile toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div id="mainNavbar" class="collapse navbar-collapse">
+
+                    <!-- LEVA STRAN MENIJA -->
+                    <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link @(currentPage == "/Index" ? "fw-semibold" : "")"
+                               asp-area="" asp-page="/Index">Domov</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                            <a class="nav-link" asp-area="" asp-page="/About">O projektu</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-page="/Events">Dogodki</a>
                         </li>
                     </ul>
+
+                    <!-- DESNA STRAN (LOGIN / REGISTER) – skrij na /Login in /Register -->
+                    @if (!hideAuthLinks)
+                    {
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-page="/Login">Prijava</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-page="/Register">Registracija</a>
+                            </li>
+                        </ul>
+                    }
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()

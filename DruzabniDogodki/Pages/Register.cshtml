@@ -1,0 +1,195 @@
+﻿@page
+@model DruzabniDogodki.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Registracija";
+}
+
+<section class="auth-container">
+    <div class="card">
+        <header class="card-header">
+            <h1 class="card-title">Ustvari račun</h1>
+            <p class="card-subtitle">Registriraj se za uporabo aplikacije Družabni dogodki.</p>
+        </header>
+
+        <form method="post" class="auth-form">
+            <div asp-validation-summary="ModelOnly" class="form-global-error"></div>
+
+            <div class="form-group">
+                <label asp-for="Input.UserName" class="form-label"></label>
+                <input asp-for="Input.UserName" class="form-input" autocomplete="username" />
+                <span asp-validation-for="Input.UserName" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-input" autocomplete="email" />
+                <span asp-validation-for="Input.Email" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Password" class="form-label"></label>
+                <input asp-for="Input.Password" class="form-input" autocomplete="new-password" />
+                <span asp-validation-for="Input.Password" class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.ConfirmPassword" class="form-label"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-input" autocomplete="new-password" />
+                <span asp-validation-for="Input.ConfirmPassword" class="form-error"></span>
+            </div>
+
+            <button type="submit" class="btn-primary">
+                Ustvari račun
+            </button>
+
+            <p class="auth-footer">
+                Že imaš račun?
+                <a asp-page="/Login">Prijava</a>
+            </p>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+@section Styles {
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --error: #ef4444;
+            --input: #1f2937;
+            --border: #374151;
+        }
+
+        body {
+            background: radial-gradient(1200px 600px at 20% 10%, #0b1020, transparent), radial-gradient(1000px 600px at 80% 0%, #0b1b33, transparent), var(--bg);
+        }
+
+        /* auth-container samo centrira kartico, ne rabi več ozadja */
+        .auth-container {
+            min-height: calc(100vh - 120px);
+            display: grid;
+            place-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 450px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)) var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            backdrop-filter: blur(6px);
+            color: var(--text);
+        }
+
+        .card-header {
+            padding: 1.25rem 1.25rem 0.5rem;
+            text-align: center;
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            margin: 0.3rem 0 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .auth-form {
+            padding: 1.25rem;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 0.4rem;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+
+        .form-input {
+            width: 100%;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 0.7rem 0.9rem;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+            .form-input:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+            }
+
+        .form-error {
+            color: var(--error);
+            font-size: 0.85rem;
+            min-height: 1em;
+        }
+
+        .form-global-error {
+            min-height: 1rem;
+            color: var(--error);
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(180deg, var(--primary), var(--primary-hover));
+            color: white;
+            padding: 0.8rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
+            transition: transform 0.05s ease, filter 0.15s ease;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+            .btn-primary:hover {
+                filter: brightness(1.05);
+            }
+
+            .btn-primary:active {
+                transform: translateY(1px);
+            }
+
+        .auth-footer {
+            margin: 0.5rem 0 0;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+            .auth-footer a {
+                color: var(--primary);
+                text-decoration: none;
+            }
+
+                .auth-footer a:hover {
+                    text-decoration: underline;
+                }
+    </style>
+}
