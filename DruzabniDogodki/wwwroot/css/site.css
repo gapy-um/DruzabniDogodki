@@ -8,7 +8,11 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
@@ -19,4 +23,45 @@ html {
 
 body {
   margin-bottom: 60px;
+}
+
+/* =============================== */
+/*        DARK MODE SUPPORT        */
+/* =============================== */
+
+body.dark-mode {
+  background-color: #0f172a;   /* temno modra */
+  color: #e5e7eb;              /* svetel tekst */
+}
+
+/* kartice, modal, tabela */
+body.dark-mode .card,
+body.dark-mode .table,
+body.dark-mode .modal-content {
+  background-color: #1e293b;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+/* input polja */
+body.dark-mode .form-control,
+body.dark-mode .form-control:focus {
+  background-color: #0f172a;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+/* linki */
+body.dark-mode a {
+  color: #38bdf8;
+}
+
+body.dark-mode a:hover {
+  color: #0ea5e9;
+}
+
+/* footer */
+body.dark-mode footer {
+  background-color: #020617;
+  color: #9ca3af;
 }
