@@ -1,0 +1,42 @@
+@page
+@model DruzabniDogodki.Pages.Events.CalendarModel
+@{
+    ViewData["Title"] = "Koledar dogodkov";
+}
+
+<h2>Koledar dogodkov</h2>
+<p>
+    <a asp-page="/Events/Index" class="btn btn-outline-secondary">? Nazaj na seznam</a>
+    @if (Model.IsAdmin)
+    {
+        <a asp-page="/Events/Create" class="btn btn-primary">? Nov dogodek</a>
+    }
+</p>
+
+@if (!Model.EventsByDay.Any())
+{
+    <p>Ni razpoložljivih dogodkov.</p>
+}
+else
+{
+    <div class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 1rem;">
+        @foreach (var day in Model.EventsByDay.OrderBy(k => k.Key))
+        {
+            <div class="calendar-day border rounded p-2">
+                <div class="fw-bold">@day.Key.ToString("dd.MM.yyyy")</div>
+                <ul class="list-unstyled mt-2">
+                    @foreach (var e in day.Value.OrderBy(e => e.EventDate))
+                    {
+                        <li class="mb-2">
+                            <div>@e.EventDate.ToString("HH:mm") - <strong>@e.Title</strong></div>
+                            @if (!string.IsNullOrWhiteSpace(e.Location))
+                            {
+                                <div class="text-muted">@e.Location</div>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+}
