@@ -1,0 +1,188 @@
+@page
+@model DruzabniDogodki.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin - Upravljanje dogodkov";
+}
+
+<h1>Admin - Upravljanje dogodkov</h1>
+
+<p>
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">
+        ? Dodaj dogodek
+    </button>
+</p>
+
+@if (!Model.Events.Any())
+{
+    <p class="text-muted">Ni dogodkov.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Naslov</th>
+                <th>Datum</th>
+                <th>Organizator</th>
+                <th>Kategorija</th>
+                <th>Akcije</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var e in Model.Events)
+        {
+            <tr>
+                <td>@e.Title</td>
+                <td>@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@e.Organizer</td>
+                <td>@e.Category</td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-warning"
+                            data-bs-toggle="modal" data-bs-target="#editModal"
+                            data-id="@e.Id" data-title="@e.Title" data-description="@e.Description"
+                            data-date="@e.EventDate.ToString("yyyy-MM-ddTHH\\:mm")" data-location="@e.Location"
+                            data-organizer="@e.Organizer" data-category="@e.Category" data-price="@e.Price">
+                        Uredi
+                    </button>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@e.Id" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger"
+                                onclick="return confirm('Izbriši dogodek?');">
+                            Izbriši
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+<!-- CREATE MODAL -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Create" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dodaj dogodek</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Naslov *</label>
+                        <input type="text" class="form-control" name="title" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Opis</label>
+                        <textarea class="form-control" name="description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Datum in èas *</label>
+                        <input type="datetime-local" class="form-control" name="eventDate" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lokacija</label>
+                        <input type="text" class="form-control" name="location" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organizator</label>
+                        <input type="text" class="form-control" name="organizer" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategorija</label>
+                        <select class="form-select" name="category">
+                            <option value="">-- Izberi --</option>
+                            <option value="Koncert">Koncert</option>
+                            <option value="Šport">Šport</option>
+                            <option value="Predstava">Predstava</option>
+                            <option value="Drugo">Drugo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cena (€)</label>
+                        <input type="number" step="0.01" class="form-control" name="price" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Slika</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Preklièi</button>
+                    <button type="submit" class="btn btn-success">Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT MODAL (similar structure, pre-filled via JS) -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Edit">
+                <input type="hidden" name="id" id="edit-id" />
+                <div class="modal-header">
+                    <h5 class="modal-title">Uredi dogodek</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Naslov *</label>
+                        <input type="text" class="form-control" name="title" id="edit-title" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Opis</label>
+                        <textarea class="form-control" name="description" id="edit-description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Datum in èas *</label>
+                        <input type="datetime-local" class="form-control" name="eventDate" id="edit-date" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Lokacija</label>
+                        <input type="text" class="form-control" name="location" id="edit-location" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Organizator</label>
+                        <input type="text" class="form-control" name="organizer" id="edit-organizer" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Kategorija</label>
+                        <select class="form-select" name="category" id="edit-category">
+                            <option value="">-- Izberi --</option>
+                            <option value="Koncert">Koncert</option>
+                            <option value="Šport">Šport</option>
+                            <option value="Predstava">Predstava</option>
+                            <option value="Drugo">Drugo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cena (€)</label>
+                        <input type="number" step="0.01" class="form-control" name="price" id="edit-price" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Preklièi</button>
+                    <button type="submit" class="btn btn-primary">Shrani</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var editModal = document.getElementById('editModal');
+        editModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            document.getElementById('edit-id').value = button.getAttribute('data-id');
+            document.getElementById('edit-title').value = button.getAttribute('data-title');
+            document.getElementById('edit-description').value = button.getAttribute('data-description') || '';
+            document.getElementById('edit-date').value = button.getAttribute('data-date');
+            document.getElementById('edit-location').value = button.getAttribute('data-location') || '';
+            document.getElementById('edit-organizer').value = button.getAttribute('data-organizer') || '';
+            document.getElementById('edit-category').value = button.getAttribute('data-category') || '';
+            document.getElementById('edit-price').value = button.getAttribute('data-price') || '';
+        });
+    </script>
+}

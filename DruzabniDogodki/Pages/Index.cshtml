@@ -9,7 +9,10 @@
     <p>
         Organizirajte, ustvarjajte in delite svoje dogodke – preprosto in hitro.
     </p>
-     <p>
-        <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
-    </p>
+    @if (Model.IsAdmin)
+    {
+        <p>
+            <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
+        </p>
+    }
 </section>

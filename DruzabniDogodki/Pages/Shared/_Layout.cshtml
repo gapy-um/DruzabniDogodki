@@ -36,6 +36,9 @@
         var currentPage = ViewContext.RouteData.Values["page"] as string ?? "";
         var userName = Context.Session.GetString("UserName");
         bool isLoggedIn = !string.IsNullOrEmpty(userName);
+        
+        var isAdminStr = Context.Session.GetString("IsAdmin");
+        bool isAdmin = bool.TryParse(isAdminStr, out var admin) && admin;
 
         bool onAuthPage =
             string.Equals(currentPage, "/Login", StringComparison.OrdinalIgnoreCase) ||
@@ -69,6 +72,13 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-page="/Events/Index">Dogodki</a>
                         </li>
+
+                        @if (isLoggedIn && isAdmin)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-page="/Admin/Index">Admin</a>
+                            </li>
+                        }
                     </ul>
 
                     <!-- Desna stran -->

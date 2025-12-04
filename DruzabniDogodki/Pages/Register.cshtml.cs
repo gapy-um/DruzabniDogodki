@@ -67,7 +67,7 @@ namespace DruzabniDogodki.Pages
 
             // 2) vstavi novega uporabnika
             const string insertSql =
-                "INSERT INTO Users (UserName, Email, Password) VALUES ($u, $e, $p)";
+                "INSERT INTO Users (UserName, Email, Password, IsAdmin) VALUES ($u, $e, $p, 0)";
 
             using (var insertCmd = new SqliteCommand(insertSql, connection))
             {

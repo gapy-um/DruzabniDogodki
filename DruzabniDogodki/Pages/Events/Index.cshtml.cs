@@ -10,6 +10,7 @@ namespace DruzabniDogodki.Pages.Events
     public class IndexModel : PageModel
     {
         public List<EventItem> Events { get; set; } = new();
+        public bool IsAdmin { get; set; }
 
         public class EventItem
         {
@@ -21,13 +22,16 @@ namespace DruzabniDogodki.Pages.Events
         }
 
         private const string ConnectionString =
-            "Data Source=/Users/timurisek/Documents/GitHub/DruzabniDogodki/DruzabniDogodki/druzabnidogodki.db";
+            "Data Source=druzabnidogodki.db";
 
         public IActionResult OnGet()
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
                 return RedirectToPage("/Login");
+
+            var isAdminStr = HttpContext.Session.GetString("IsAdmin");
+            IsAdmin = bool.TryParse(isAdminStr, out var isAdmin) && isAdmin;
 
             using var connection = new SqliteConnection(ConnectionString);
             connection.Open();
@@ -52,12 +56,8 @@ namespace DruzabniDogodki.Pages.Events
             cmd.CommandText = @"
                 SELECT e.Id, e.Title, e.Description, e.EventDate, e.Location
                 FROM Events e
-                JOIN Users u ON e.UserId = u.Id
-                WHERE u.UserName = $username
                 ORDER BY e.EventDate;
             ";
-
-            cmd.Parameters.AddWithValue("$username", username);
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -73,64 +73,6 @@ namespace DruzabniDogodki.Pages.Events
             }
 
             return Page();
-        }
-
-        // POST: Urejanje dogodka (iz modala)
-        public IActionResult OnPostEdit(int id, string title, string? description, DateTime eventDate, string? location)
-        {
-            var username = HttpContext.Session.GetString("UserName");
-            if (string.IsNullOrEmpty(username))
-                return RedirectToPage("/Login");
-
-            using var connection = new SqliteConnection(ConnectionString);
-            connection.Open();
-
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = @"
-                UPDATE Events
-                SET Title = $title,
-                    Description = $desc,
-                    EventDate = $date,
-                    Location = $loc
-                WHERE Id = $id
-                  AND UserId = (SELECT Id FROM Users WHERE UserName = $username);
-            ";
-
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.Parameters.AddWithValue("$title", title);
-            cmd.Parameters.AddWithValue("$desc", (object?)description ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$date", eventDate.ToString("yyyy-MM-dd HH:mm"));
-            cmd.Parameters.AddWithValue("$loc", (object?)location ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("$username", username);
-
-            cmd.ExecuteNonQuery();
-
-            return RedirectToPage();
-        }
-
-        // POST: Brisanje dogodka
-        public IActionResult OnPostDelete(int id)
-        {
-            var username = HttpContext.Session.GetString("UserName");
-            if (string.IsNullOrEmpty(username))
-                return RedirectToPage("/Login");
-
-            using var connection = new SqliteConnection(ConnectionString);
-            connection.Open();
-
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = @"
-                DELETE FROM Events
-                WHERE Id = $id
-                  AND UserId = (SELECT Id FROM Users WHERE UserName = $username);
-            ";
-
-            cmd.Parameters.AddWithValue("$id", id);
-            cmd.Parameters.AddWithValue("$username", username);
-
-            cmd.ExecuteNonQuery();
-
-            return RedirectToPage();
         }
     }
 }

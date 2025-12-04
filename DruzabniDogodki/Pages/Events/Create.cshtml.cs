@@ -28,6 +28,15 @@ namespace DruzabniDogodki.Pages.Events
                 return RedirectToPage("/Login");
             }
 
+            // preverimo, če je admin
+            var isAdminStr = HttpContext.Session.GetString("IsAdmin");
+            var isAdmin = bool.TryParse(isAdminStr, out var admin) && admin;
+            
+            if (!isAdmin)
+            {
+                return RedirectToPage("/Events/Index");
+            }
+
             return Page();
         }
 
@@ -37,6 +46,15 @@ namespace DruzabniDogodki.Pages.Events
             if (string.IsNullOrEmpty(username))
             {
                 return RedirectToPage("/Login");
+            }
+
+            // preverimo, če je admin
+            var isAdminStr = HttpContext.Session.GetString("IsAdmin");
+            var isAdmin = bool.TryParse(isAdminStr, out var admin) && admin;
+            
+            if (!isAdmin)
+            {
+                return RedirectToPage("/Events/Index");
             }
 
             if (!ModelState.IsValid)

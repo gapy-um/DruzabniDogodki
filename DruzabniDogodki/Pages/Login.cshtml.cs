@@ -50,7 +50,7 @@ namespace DruzabniDogodki.Pages
             connection.Open();
 
             const string sql = @"
-        SELECT UserName
+        SELECT UserName, IsAdmin
         FROM Users
         WHERE UserName = $u AND Password = $p
         LIMIT 1;";
@@ -59,16 +59,20 @@ namespace DruzabniDogodki.Pages
             cmd.Parameters.AddWithValue("$u", Input.UserName);
             cmd.Parameters.AddWithValue("$p", Input.Password);
 
-            var result = cmd.ExecuteScalar();
-
-            if (result == null)
+            using var reader = cmd.ExecuteReader();
+            
+            if (!reader.Read())
             {
                 ModelState.AddModelError(string.Empty, "Nepravilno uporabniško ime ali geslo.");
                 return Page();
             }
 
+            var userName = reader.GetString(0);
+            var isAdmin = reader.IsDBNull(1) ? false : reader.GetBoolean(1);
+
             // ? prijava uspela – zapišemo v Session
-            HttpContext.Session.SetString("UserName", Input.UserName);
+            HttpContext.Session.SetString("UserName", userName);
+            HttpContext.Session.SetString("IsAdmin", isAdmin.ToString());
 
             // redirect na Index (ali ReturnUrl)
             return LocalRedirect(ReturnUrl!);
@@ -76,3 +80,5 @@ namespace DruzabniDogodki.Pages
 
     }
 }
+
+
