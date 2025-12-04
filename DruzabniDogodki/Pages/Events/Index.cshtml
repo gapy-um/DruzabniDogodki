@@ -7,19 +7,28 @@
 
 <h2>@(Model.IsAdmin ? "Moji dogodki" : "Vsi dogodki")</h2>
 
-@if (Model.IsAdmin)
-{
-    <p>
-        <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
-        <a asp-page="/Events/Calendar" class="btn btn-outline-primary ms-2">📅 Koledar</a>
-    </p>
-}
-else
-{
-    <p>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <form method="get" class="d-flex" role="search">
+        <input type="text"
+               name="q"
+               value="@Model.Query"
+               class="form-control"
+               placeholder="Išči po naslovu, opisu ali lokaciji"
+               style="max-width: 320px;" />
+        <button type="submit" class="btn btn-outline-secondary ms-2">Išči</button>
+        @* ohrani sort & dir pri iskanju *@
+        <input type="hidden" name="sort" value="@Model.Sort" />
+        <input type="hidden" name="dir" value="@Model.Dir" />
+    </form>
+
+    <div>
         <a asp-page="/Events/Calendar" class="btn btn-outline-primary">📅 Koledar</a>
-    </p>
-}
+        @if (Model.IsAdmin)
+        {
+            <a asp-page="/Events/Create" class="btn btn-primary ms-2">➕ Nov dogodek</a>
+        }
+    </div>
+</div>
 
 @if (!Model.Events.Any())
 {
@@ -30,9 +39,33 @@ else
     <table class="table">
         <thead>
             <tr>
-                <th>Naslov</th>
-                <th>Datum</th>
-                <th>Lokacija</th>
+                <th>
+                    <a asp-page="./Index"
+                       asp-route-q="@Model.Query"
+                       asp-route-sort="title"
+                       asp-route-dir="@(Model.Sort == "title" && Model.Dir == "asc" ? "desc" : "asc")">
+                        Naslov
+                        @(Model.Sort == "title" ? (Model.Dir == "asc" ? "▲" : "▼") : "")
+                    </a>
+                </th>
+                <th>
+                    <a asp-page="./Index"
+                       asp-route-q="@Model.Query"
+                       asp-route-sort="date"
+                       asp-route-dir="@(Model.Sort == "date" && Model.Dir == "asc" ? "desc" : "asc")">
+                        Datum
+                        @(Model.Sort == "date" ? (Model.Dir == "asc" ? "▲" : "▼") : "")
+                    </a>
+                </th>
+                <th>
+                    <a asp-page="./Index"
+                       asp-route-q="@Model.Query"
+                       asp-route-sort="location"
+                       asp-route-dir="@(Model.Sort == "location" && Model.Dir == "asc" ? "desc" : "asc")">
+                        Lokacija
+                        @(Model.Sort == "location" ? (Model.Dir == "asc" ? "▲" : "▼") : "")
+                    </a>
+                </th>
                 @if (Model.IsAdmin)
                 {
                     <th>Akcije</th>
@@ -49,7 +82,6 @@ else
                 @if (Model.IsAdmin)
                 {
                     <td>
-                        <!-- Gumb Uredi odpre modal -->
                         <button type="button"
                                 class="btn btn-sm btn-secondary"
                                 data-bs-toggle="modal"
@@ -62,7 +94,6 @@ else
                             Uredi
                         </button>
 
-                        <!-- Gumb Izbriši pošlje POST na handler Delete -->
                         <form method="post"
                               asp-page-handler="Delete"
                               asp-route-id="@e.Id"

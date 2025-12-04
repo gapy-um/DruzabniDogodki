@@ -12,6 +12,9 @@ namespace DruzabniDogodki.Pages.Events
     {
         public Dictionary<DateOnly, List<EventItem>> EventsByDay { get; set; } = new();
         public bool IsAdmin { get; set; }
+        public DateOnly CurrentMonth { get; set; } = DateOnly.FromDateTime(DateTime.Today.AddDays(1 - DateTime.Today.Day));
+        public DateOnly PrevMonth => CurrentMonth.AddMonths(-1);
+        public DateOnly NextMonth => CurrentMonth.AddMonths(1);
 
         public class EventItem
         {
@@ -24,7 +27,7 @@ namespace DruzabniDogodki.Pages.Events
 
         private const string ConnectionString = "Data Source=druzabnidogodki.db";
 
-        public IActionResult OnGet()
+        public IActionResult OnGet(string? month)
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
@@ -33,6 +36,15 @@ namespace DruzabniDogodki.Pages.Events
             var isAdminStr = HttpContext.Session.GetString("IsAdmin");
             IsAdmin = bool.TryParse(isAdminStr, out var isAdmin) && isAdmin;
 
+            // Parse month yyyy-MM, default to current month
+            if (!string.IsNullOrWhiteSpace(month))
+            {
+                if (DateTime.TryParse(month + "-01", out var parsed))
+                {
+                    CurrentMonth = new DateOnly(parsed.Year, parsed.Month, 1);
+                }
+            }
+
             using var connection = new SqliteConnection(ConnectionString);
             connection.Open();
 
@@ -40,7 +52,9 @@ namespace DruzabniDogodki.Pages.Events
             cmd.CommandText = @"
                 SELECT Id, Title, Description, EventDate, Location
                 FROM Events
+                WHERE strftime('%Y-%m', EventDate) = $month
                 ORDER BY EventDate;";
+            cmd.Parameters.AddWithValue("$month", $"{CurrentMonth.Year:D4}-{CurrentMonth.Month:D2}");
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())

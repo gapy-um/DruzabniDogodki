@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
@@ -11,6 +12,10 @@ namespace DruzabniDogodki.Pages.Events
     {
         public List<EventItem> Events { get; set; } = new();
         public bool IsAdmin { get; set; }
+
+        public string? Query { get; set; }
+        public string Sort { get; set; } = "date";
+        public string Dir { get; set; } = "asc";
 
         public class EventItem
         {
@@ -24,7 +29,7 @@ namespace DruzabniDogodki.Pages.Events
         private const string ConnectionString =
             "Data Source=druzabnidogodki.db";
 
-        public IActionResult OnGet()
+        public IActionResult OnGet(string? q, string? sort, string? dir)
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
@@ -32,6 +37,10 @@ namespace DruzabniDogodki.Pages.Events
 
             var isAdminStr = HttpContext.Session.GetString("IsAdmin");
             IsAdmin = bool.TryParse(isAdminStr, out var isAdmin) && isAdmin;
+
+            Query = q;
+            Sort = string.IsNullOrWhiteSpace(sort) ? "date" : sort.ToLowerInvariant();
+            Dir = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
 
             using var connection = new SqliteConnection(ConnectionString);
             connection.Open();
@@ -71,6 +80,33 @@ namespace DruzabniDogodki.Pages.Events
                     Location = reader.IsDBNull(4) ? null : reader.GetString(4)
                 });
             }
+
+            // Iskanje (in-memory filter)
+            if (!string.IsNullOrWhiteSpace(Query))
+            {
+                var term = Query.Trim();
+                Events = Events.Where(e =>
+                        (e.Title?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (e.Description?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (e.Location?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false))
+                    .ToList();
+            }
+
+            // Sortiranje (in-memory)
+            IOrderedEnumerable<EventItem> ordered = Sort switch
+            {
+                "title" => Dir == "desc"
+                    ? Events.OrderByDescending(e => e.Title)
+                    : Events.OrderBy(e => e.Title),
+                "location" => Dir == "desc"
+                    ? Events.OrderByDescending(e => e.Location)
+                    : Events.OrderBy(e => e.Location),
+                _ => Dir == "desc"
+                    ? Events.OrderByDescending(e => e.EventDate)
+                    : Events.OrderBy(e => e.EventDate)
+            };
+
+            Events = ordered.ToList();
 
             return Page();
         }

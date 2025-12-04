@@ -4,14 +4,21 @@
     ViewData["Title"] = "Koledar dogodkov";
 }
 
-<h2>Koledar dogodkov</h2>
-<p>
-    <a asp-page="/Events/Index" class="btn btn-outline-secondary">? Nazaj na seznam</a>
-    @if (Model.IsAdmin)
-    {
-        <a asp-page="/Events/Create" class="btn btn-primary">? Nov dogodek</a>
-    }
-</p>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h2 class="mb-0">Koledar dogodkov – @Model.CurrentMonth.ToString("MMMM yyyy")</h2>
+    <div>
+        <a asp-page="/Events/Index" class="btn btn-outline-secondary">? Nazaj na seznam</a>
+        @if (Model.IsAdmin)
+        {
+            <a asp-page="/Events/Create" class="btn btn-primary ms-2">? Nov dogodek</a>
+        }
+    </div>
+</div>
+
+<div class="mb-3">
+    <a asp-page="/Events/Calendar" asp-route-month="@Model.PrevMonth.ToString("yyyy-MM")" class="btn btn-outline-primary">« Prejšnji</a>
+    <a asp-page="/Events/Calendar" asp-route-month="@Model.NextMonth.ToString("yyyy-MM")" class="btn btn-outline-primary ms-2">Naslednji »</a>
+</div>
 
 @if (!Model.EventsByDay.Any())
 {
