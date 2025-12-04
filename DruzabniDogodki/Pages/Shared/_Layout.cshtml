@@ -15,7 +15,6 @@
     @await RenderSectionAsync("Styles", required: false)
 
     <style>
-        /* Temen navbar */
         .nav-main {
             box-shadow: none;
             border-bottom: none;
@@ -28,6 +27,40 @@
         .nav-main .nav-link:hover {
             color: #ffffff !important;
         }
+        /* Lep dropdown meni */
+        .user-dropdown svg {
+            transition: 0.15s ease;
+        }
+
+        .user-dropdown:hover svg {
+            transform: scale(1.1);
+        }
+
+        .username-text {
+            color: #e5e7eb;
+            font-size: 0.95rem;
+        }
+
+        /* Dropdown meni */
+        .user-menu {
+            background-color: #111827;
+            border: 1px solid #374151;
+            border-radius: 8px;
+        }
+
+            .user-menu .dropdown-item {
+                color: #e5e7eb;
+            }
+
+                .user-menu .dropdown-item:hover {
+                    background-color: #1f2937;
+                    color: #fff;
+                }
+
+            .user-menu .dropdown-divider {
+                border-color: #374151;
+            }
+
     </style>
 </head>
 
@@ -55,7 +88,7 @@
                 </button>
 
                 <div id="mainNavbar" class="collapse navbar-collapse">
-                    <!-- Leva stran -->
+                    
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
                             <a class="nav-link @(currentPage == "/Index" ? "fw-semibold" : "")"
@@ -71,26 +104,58 @@
                         </li>
                     </ul>
 
-                    <!-- Desna stran -->
+                    
                     @if (isLoggedIn)
                     {
-                        <ul class="navbar-nav ms-auto">
-                            <li class="nav-item">
-                                <span class="navbar-text me-3">
-                                    Pozdravljen, @userName
-                                </span>
-                            </li>
+                        <ul class="navbar-nav ms-auto align-items-center">
 
-                            <li class="nav-item">
+                            
+                            <li class="nav-item me-3">
                                 <button id="themeToggle"
-                                        class="btn btn-sm btn-outline-light ms-2"
+                                        class="btn btn-sm btn-outline-light"
                                         type="button">
-                                    Dark mode
+                                    Tema
                                 </button>
                             </li>
 
-                            <li class="nav-item">
-                                <a class="nav-link" asp-page="/Logout">Odjava</a>
+                           
+                            <li class="nav-item dropdown">
+
+                                <a class="nav-link dropdown-toggle d-flex align-items-center user-dropdown"
+                                   href="#"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+
+                                    <span class="me-2 username-text">Pozdravljen, <b>@userName</b></span>
+
+                                    
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"
+                                         fill="#e5e7eb" viewBox="0 0 16 16">
+                                        <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3zm5-6a3 3 0 1 0 0-6
+                            3 3 0 0 0 0 6z" />
+                                    </svg>
+
+                                </a>
+
+                                <ul class="dropdown-menu dropdown-menu-end user-menu">
+
+                                    <li>
+                                        <a class="dropdown-item" asp-page="/Profile">Profil</a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item" asp-page="/Events/MyEvents">Moji dogodki</a>
+                                    </li>
+
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li>
+                                        <a class="dropdown-item text-danger" asp-page="/Logout">Odjava</a>
+                                    </li>
+
+                                </ul>
+
                             </li>
                         </ul>
                     }
@@ -104,11 +169,11 @@
                                 <a class="nav-link" asp-page="/Register">Registracija</a>
                             </li>
 
-                            <li class="nav-item">
+                            <li class="nav-item me-3">
                                 <button id="themeToggle"
-                                        class="btn btn-sm btn-outline-light ms-2"
+                                        class="btn btn-sm btn-outline-light"
                                         type="button">
-                                    Dark mode
+                                    Tema
                                 </button>
                             </li>
                         </ul>

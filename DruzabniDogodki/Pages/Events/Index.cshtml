@@ -5,11 +5,44 @@
     ViewData["Title"] = "Moji dogodki";
 }
 
-<h2>Moji dogodki</h2>
+<h2 class="mb-3">Moji dogodki</h2>
 
-<p>
-    <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
-</p>
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+
+    <div>
+        <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
+    </div>
+
+    <form method="get" class="event-search-form d-flex flex-wrap align-items-end gap-2">
+
+        <div class="event-search-field">
+            <label class="form-label form-label-sm">Naslov</label>
+            <input asp-for="SearchTitle"
+                   class="form-control event-search-input"
+                   placeholder="Ime dogodka..." />
+        </div>
+
+        <div class="event-search-field">
+            <label class="form-label form-label-sm">Lokacija</label>
+            <input asp-for="SearchLocation"
+                   class="form-control event-search-input"
+                   placeholder="Mesto, kraj..." />
+        </div>
+
+        <div class="event-search-field">
+            <label class="form-label form-label-sm">Datum</label>
+            <input asp-for="SearchDate"
+                   type="date"
+                   class="form-control event-search-input" />
+        </div>
+
+        <button type="submit" class="btn btn-outline-primary event-search-button">
+            Išči
+        </button>
+    </form>
+</div>
+
 
 @if (!Model.Events.Any())
 {
@@ -27,76 +60,75 @@ else
             </tr>
         </thead>
         <tbody>
-        @foreach (var e in Model.Events)
-        {
-            <tr>
-                <td>@e.Title</td>
-                <td>@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
-                <td>@e.Location</td>
-                <td>
-                    <!-- Gumb Uredi odpre modal -->
-                    <button type="button"
-                            class="btn btn-sm btn-secondary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editModal"
-                            data-id="@e.Id"
-                            data-title="@e.Title"
-                            data-description="@e.Description"
-                            data-date="@e.EventDate.ToString("yyyy-MM-ddTHH\\:mm")"
-                            data-location="@e.Location">
-                        Uredi
-                    </button>
-
-                    <!-- Gumb Izbriši pošlje POST na handler Delete -->
-                    <form method="post"
-                          asp-page-handler="Delete"
-                          asp-route-id="@e.Id"
-                          class="d-inline">
-                        <button type="submit"
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Res želiš izbrisati ta dogodek?');">
-                            Izbriši
+            @foreach (var e in Model.Events)
+            {
+                <tr>
+                    <td>@e.Title</td>
+                    <td>@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@e.Location</td>
+                    <td>
+                        <button type="button"
+                                class="btn btn-sm btn-secondary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal"
+                                data-id="@e.Id"
+                                data-title="@e.Title"
+                                data-description="@e.Description"
+                                data-date="@e.EventDate.ToString("yyyy-MM-ddTHH\\:mm")"
+                                data-location="@e.Location">
+                            Uredi
                         </button>
-                    </form>
-                </td>
-            </tr>
-        }
+
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              asp-route-id="@e.Id"
+                              class="d-inline">
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Res želiš izbrisati ta dogodek?');">
+                                Izbriši
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
         </tbody>
     </table>
 }
 
-<!-- EDIT MODAL -->
+<!-- EDIT MODAL (BREZ SPREMEMB) -->
 <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="post" asp-page-handler="Edit">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalLabel">Uredi dogodek</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zapri"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <input type="hidden" name="id" id="edit-id" />
 
                     <div class="mb-3">
-                        <label for="edit-title" class="form-label">Naslov</label>
+                        <label class="form-label">Naslov</label>
                         <input type="text" class="form-control" id="edit-title" name="title" required />
                     </div>
 
                     <div class="mb-3">
-                        <label for="edit-description" class="form-label">Opis</label>
+                        <label class="form-label">Opis</label>
                         <textarea class="form-control" id="edit-description" name="description"></textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label for="edit-date" class="form-label">Datum in čas</label>
+                        <label class="form-label">Datum in čas</label>
                         <input type="datetime-local" class="form-control" id="edit-date" name="eventDate" required />
                     </div>
 
                     <div class="mb-3">
-                        <label for="edit-location" class="form-label">Lokacija</label>
+                        <label class="form-label">Lokacija</label>
                         <input type="text" class="form-control" id="edit-location" name="location" />
                     </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prekliči</button>
                     <button type="submit" class="btn btn-primary">Shrani</button>
@@ -106,24 +138,66 @@ else
     </div>
 </div>
 
+
 @section Scripts {
     <script>
-        // Ko se modal odpre, napolnimo inpute z vrednostmi iz gumba
+        // Napolni modal s podatki
         var editModal = document.getElementById('editModal');
         editModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
-
-            var id = button.getAttribute('data-id');
-            var title = button.getAttribute('data-title');
-            var description = button.getAttribute('data-description');
-            var date = button.getAttribute('data-date');
-            var location = button.getAttribute('data-location');
-
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-title').value = title;
-            document.getElementById('edit-description').value = description || '';
-            document.getElementById('edit-date').value = date;
-            document.getElementById('edit-location').value = location || '';
+            document.getElementById('edit-id').value = button.getAttribute('data-id');
+            document.getElementById('edit-title').value = button.getAttribute('data-title');
+            document.getElementById('edit-description').value = button.getAttribute('data-description') || '';
+            document.getElementById('edit-date').value = button.getAttribute('data-date');
+            document.getElementById('edit-location').value = button.getAttribute('data-location') || '';
         });
     </script>
+}
+
+@section Styles {
+    <style>
+        .form-label-sm {
+            font-size: 0.8rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .event-search-form {
+            max-width: 600px;
+        }
+
+        .event-search-field {
+            min-width: 140px;
+            flex: 1 1 0;
+        }
+
+        .event-search-input {
+            padding: .35rem .6rem;
+            font-size: .9rem;
+        }
+
+        .event-search-button {
+            padding: .4rem .9rem;
+            font-size: .9rem;
+            white-space: nowrap;
+        }
+
+        /* 🌙 DARK MODE */
+        body.dark-mode .event-search-form {
+            background-color: #020617;
+            padding: .6rem .8rem;
+            border-radius: .75rem;
+            border: 1px solid #374151;
+        }
+
+        body.dark-mode .event-search-input {
+            background-color: #111827;
+            border-color: #374151;
+            color: #e5e7eb;
+        }
+
+            body.dark-mode .event-search-input:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59,130,246,.4);
+            }
+    </style>
 }

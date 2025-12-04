@@ -11,6 +11,15 @@ namespace DruzabniDogodki.Pages.Events
     {
         public List<EventItem> Events { get; set; } = new();
 
+        [BindProperty(SupportsGet = true)]
+        public string? SearchTitle { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public string? SearchLocation { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? SearchDate { get; set; }
+
         public class EventItem
         {
             public int Id { get; set; }
@@ -20,18 +29,18 @@ namespace DruzabniDogodki.Pages.Events
             public string? Location { get; set; }
         }
 
-        private const string ConnectionString =
-            "Data Source=/Users/timurisek/Documents/GitHub/DruzabniDogodki/DruzabniDogodki/druzabnidogodki.db";
-
         public IActionResult OnGet()
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
                 return RedirectToPage("/Login");
 
-            using var connection = new SqliteConnection(ConnectionString);
+            const string connectionString = "Data Source=druzabnidogodki.db";
+
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
 
+            // tabela Events – èe ne obstaja, jo ustvari
             using (var createCmd = connection.CreateCommand())
             {
                 createCmd.CommandText = @"
@@ -48,16 +57,38 @@ namespace DruzabniDogodki.Pages.Events
                 createCmd.ExecuteNonQuery();
             }
 
-            using var cmd = connection.CreateCommand();
-            cmd.CommandText = @"
+            // osnovni SELECT
+            var sql = @"
                 SELECT e.Id, e.Title, e.Description, e.EventDate, e.Location
                 FROM Events e
                 JOIN Users u ON e.UserId = u.Id
                 WHERE u.UserName = $username
-                ORDER BY e.EventDate;
             ";
 
+            using var cmd = connection.CreateCommand();
             cmd.Parameters.AddWithValue("$username", username);
+
+            // filtri
+            if (!string.IsNullOrWhiteSpace(SearchTitle))
+            {
+                sql += " AND e.Title LIKE $title";
+                cmd.Parameters.AddWithValue("$title", "%" + SearchTitle + "%");
+            }
+
+            if (!string.IsNullOrWhiteSpace(SearchLocation))
+            {
+                sql += " AND e.Location LIKE $loc";
+                cmd.Parameters.AddWithValue("$loc", "%" + SearchLocation + "%");
+            }
+
+            if (SearchDate.HasValue)
+            {
+                sql += " AND date(e.EventDate) = $date";
+                cmd.Parameters.AddWithValue("$date", SearchDate.Value.ToString("yyyy-MM-dd"));
+            }
+
+            sql += " ORDER BY e.EventDate;";
+            cmd.CommandText = sql;
 
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -75,14 +106,16 @@ namespace DruzabniDogodki.Pages.Events
             return Page();
         }
 
-        // POST: Urejanje dogodka (iz modala)
+
         public IActionResult OnPostEdit(int id, string title, string? description, DateTime eventDate, string? location)
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
                 return RedirectToPage("/Login");
 
-            using var connection = new SqliteConnection(ConnectionString);
+            const string connectionString = "Data Source=druzabnidogodki.db";
+
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
@@ -108,14 +141,16 @@ namespace DruzabniDogodki.Pages.Events
             return RedirectToPage();
         }
 
-        // POST: Brisanje dogodka
+
         public IActionResult OnPostDelete(int id)
         {
             var username = HttpContext.Session.GetString("UserName");
             if (string.IsNullOrEmpty(username))
                 return RedirectToPage("/Login");
 
-            using var connection = new SqliteConnection(ConnectionString);
+            const string connectionString = "Data Source=druzabnidogodki.db";
+
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
 
             using var cmd = connection.CreateCommand();
