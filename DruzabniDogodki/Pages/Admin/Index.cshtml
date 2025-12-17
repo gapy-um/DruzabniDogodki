@@ -1,0 +1,219 @@
+@page
+@model DruzabniDogodki.Pages.Admin.IndexModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Admin panel";
+
+    var labelsJson = JsonSerializer.Serialize(Model.ChartLabels);
+    var valuesJson = JsonSerializer.Serialize(Model.ChartValues);
+}
+
+<div class="container" style="max-width: 1100px;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">🛡️ Admin panel</h2>
+            <div class="text-secondary">Statistika rezervacij in upravljanje.</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-page="/Events/Index" class="btn btn-outline-primary">Upravljaj dogodke</a>
+            <a asp-page="/Events/Create" class="btn btn-primary">+ Nov dogodek</a>
+            <a asp-page="/Admin/Users" class="btn btn-outline-secondary">Uporabniki</a>
+        </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Skupaj rezervacij</div>
+                    <div class="fs-3 fw-bold">@Model.TotalReservations</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-secondary small">Skupaj kupljenih kart</div>
+                    <div class="fs-3 fw-bold">@Model.TotalTickets</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP LISTS -->
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">🏆 Top dogodki po rezervacijah</h5>
+
+                    @if (!Model.TopEvents.Any())
+                    {
+                        <div class="text-secondary">Ni rezervacij.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Dogodek</th>
+                                        <th>Datum</th>
+                                        <th>Kraj</th>
+                                        <th class="text-end">Karte</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var e in Model.TopEvents)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">
+                                            <a asp-page="/Events/Details" asp-route-id="@e.EventId" class="text-decoration-none">
+                                                @e.Title
+                                            </a>
+                                        </td>
+                                        <td class="text-nowrap">@e.EventDate.ToString("dd.MM.yyyy")</td>
+                                        <td class="text-secondary text-nowrap">@((e.Location ?? "—"))</td>
+                                        <td class="text-end fw-semibold">@e.Tickets</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">👤 Top uporabniki po kupljenih kartah</h5>
+
+                    @if (!Model.TopUsers.Any())
+                    {
+                        <div class="text-secondary">Ni rezervacij.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Uporabnik</th>
+                                        <th class="text-end">Rezervacije</th>
+                                        <th class="text-end">Karte</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var u in Model.TopUsers)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">@u.UserName</td>
+                                        <td class="text-end">@u.ReservationsCount</td>
+                                        <td class="text-end fw-semibold">@u.Tickets</td>
+                                        <td class="text-end">
+                                            <a asp-page="/Admin/UserDetails" asp-route-id="@u.UserId" class="btn btn-sm btn-outline-primary">
+                                                Poglej →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card shadow-sm mt-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div>
+                    <h5 class="mb-0">📊 Graf: karte po dnevu dogodka (zadnjih 14)</h5>
+                    <div class="text-secondary small">Sum(Quantity) grupirano po dnevu EventDate.</div>
+                </div>
+            </div>
+
+            <div class="border rounded p-2">
+                <canvas id="ticketsChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const labels = @Html.Raw(labelsJson);
+    const values = @Html.Raw(valuesJson);
+
+    const canvas = document.getElementById("ticketsChart");
+    const ctx = canvas.getContext("2d");
+
+    function draw() {
+        const w = canvas.width = canvas.parentElement.clientWidth - 4;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // padding
+        const padL = 40;
+        const padR = 10;
+        const padT = 10;
+        const padB = 30;
+
+        const chartW = w - padL - padR;
+        const chartH = h - padT - padB;
+
+        const maxVal = Math.max(1, ...values);
+        const barCount = Math.max(1, values.length);
+        const gap = 8;
+        const barW = (chartW - gap * (barCount - 1)) / barCount;
+
+        // axes
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.moveTo(padL, padT);
+        ctx.lineTo(padL, padT + chartH);
+        ctx.lineTo(padL + chartW, padT + chartH);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // y labels (0, max)
+        ctx.font = "12px system-ui";
+        ctx.fillText("0", 10, padT + chartH);
+        ctx.fillText(String(maxVal), 10, padT + 12);
+
+        // bars
+        for (let i = 0; i < values.length; i++) {
+            const val = values[i];
+            const x = padL + i * (barW + gap);
+            const barH = (val / maxVal) * chartH;
+            const y = padT + chartH - barH;
+
+            ctx.globalAlpha = 0.9;
+            ctx.fillRect(x, y, barW, barH);
+            ctx.globalAlpha = 1;
+
+            // small label (day)
+            const lab = labels[i] ?? "";
+            const shortLab = lab.substring(5); // MM-DD
+            ctx.save();
+            ctx.translate(x + barW / 2, padT + chartH + 18);
+            ctx.rotate(-0.6);
+            ctx.textAlign = "center";
+            ctx.fillText(shortLab, 0, 0);
+            ctx.restore();
+        }
+    }
+
+    draw();
+    window.addEventListener("resize", draw);
+</script>
+}

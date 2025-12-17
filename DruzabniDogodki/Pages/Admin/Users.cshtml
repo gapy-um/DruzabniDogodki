@@ -1,0 +1,78 @@
+@page
+@model DruzabniDogodki.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Uporabniki";
+}
+
+<div class="container" style="max-width: 950px;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">👥 Uporabniki</h2>
+            <div class="text-secondary">
+                Upravljanje uporabnikov in njihovih rezervacij
+            </div>
+        </div>
+
+        <a asp-page="/Admin/Index" class="btn btn-outline-secondary">
+            ← Nazaj na admin
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Uporabnik</th>
+                        <th>Email</th>
+                        <th>Vloga</th>
+                        <th class="text-end">Akcije</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var u in Model.Users)
+                {
+                    bool isAdminUser =
+                        u.UserName.ToLower() == "admin" || u.Role == "Admin";
+
+                    <tr>
+                        <td class="fw-semibold">@u.UserName</td>
+                        <td class="text-secondary">@((u.Email ?? "—"))</td>
+                        <td>
+                            @if (isAdminUser)
+                            {
+                                <span class="badge bg-success">Admin</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">User</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-page="/Admin/UserDetails"
+                               asp-route-id="@u.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                Rezervacije
+                            </a>
+
+                            @if (!isAdminUser)
+                            {
+                                <form method="post"
+                                      asp-page-handler="Delete"
+                                      asp-route-id="@u.Id"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Res želiš izbrisati uporabnika @u.UserName ?\nVse njegove rezervacije bodo izbrisane!');">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger ms-1">
+                                        Izbriši
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

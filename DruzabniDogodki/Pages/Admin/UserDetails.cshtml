@@ -1,0 +1,62 @@
+@page
+@model DruzabniDogodki.Pages.Admin.UserDetailsModel
+@{
+    ViewData["Title"] = "Rezervacije uporabnika";
+}
+
+<div class="container" style="max-width: 950px;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">🎫 Rezervacije uporabnika</h2>
+            <div class="text-secondary">
+                <span class="fw-semibold">@Model.UserName</span>
+                @if (!string.IsNullOrWhiteSpace(Model.Email))
+                {
+                    <span class="text-secondary">(@Model.Email)</span>
+                }
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-page="/Admin/Users" class="btn btn-outline-secondary">← Nazaj</a>
+        </div>
+    </div>
+
+    @if (!Model.Reservations.Any())
+    {
+        <div class="alert alert-light border">Ta uporabnik nima rezervacij.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Dogodek</th>
+                            <th>Datum</th>
+                            <th>Kraj</th>
+                            <th class="text-end">Količina kart</th>
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var r in Model.Reservations)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@r.EventTitle</td>
+                            <td>@r.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="text-secondary">@((r.Location ?? "—"))</td>
+                            <td class="text-end fw-semibold">@r.Quantity</td>
+                            <td class="text-end">
+                                <a asp-page="/Events/Details" asp-route-id="@r.EventId" class="btn btn-sm btn-outline-primary">
+                                    Odpri →
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

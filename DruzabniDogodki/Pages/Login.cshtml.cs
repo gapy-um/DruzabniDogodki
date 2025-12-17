@@ -2,9 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Data.Sqlite;
-using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Http;
-
+using System;
 
 namespace DruzabniDogodki.Pages
 {
@@ -17,8 +16,8 @@ namespace DruzabniDogodki.Pages
 
         public class InputModel
         {
-            [Required(ErrorMessage = "Uporabniöko ime je obvezno.")]
-            [Display(Name = "Uporabniöko ime")]
+            [Required(ErrorMessage = "Uporabni≈°ko ime je obvezno.")]
+            [Display(Name = "Uporabni≈°ko ime")]
             public string UserName { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Geslo je obvezno.")]
@@ -40,8 +39,14 @@ namespace DruzabniDogodki.Pages
             ReturnUrl = returnUrl ?? Url.Content("~/");
 
             if (!ModelState.IsValid)
-            {
                 return Page();
+
+            // HARDCODE admin/admin
+            if (Input.UserName.Equals("admin", StringComparison.OrdinalIgnoreCase) && Input.Password == "admin")
+            {
+                HttpContext.Session.SetString("UserName", "admin");
+                HttpContext.Session.SetString("Role", "Admin");
+                return LocalRedirect(ReturnUrl!);
             }
 
             const string connectionString = "Data Source=druzabnidogodki.db";
@@ -50,29 +55,29 @@ namespace DruzabniDogodki.Pages
             connection.Open();
 
             const string sql = @"
-        SELECT UserName
-        FROM Users
-        WHERE UserName = $u AND Password = $p
-        LIMIT 1;";
+SELECT UserName, Role
+FROM Users
+WHERE UserName = $u AND Password = $p
+LIMIT 1;";
 
             using var cmd = new SqliteCommand(sql, connection);
             cmd.Parameters.AddWithValue("$u", Input.UserName);
             cmd.Parameters.AddWithValue("$p", Input.Password);
 
-            var result = cmd.ExecuteScalar();
-
-            if (result == null)
+            using var reader = cmd.ExecuteReader();
+            if (!reader.Read())
             {
-                ModelState.AddModelError(string.Empty, "Nepravilno uporabniöko ime ali geslo.");
+                ModelState.AddModelError(string.Empty, "Nepravilno uporabni≈°ko ime ali geslo.");
                 return Page();
             }
 
-            // ? prijava uspela ñ zapiöemo v Session
-            HttpContext.Session.SetString("UserName", Input.UserName);
+            var username = reader.GetString(0);
+            var role = reader.IsDBNull(1) ? "User" : reader.GetString(1);
 
-            // redirect na Index (ali ReturnUrl)
+            HttpContext.Session.SetString("UserName", username);
+            HttpContext.Session.SetString("Role", role);
+
             return LocalRedirect(ReturnUrl!);
         }
-
     }
 }

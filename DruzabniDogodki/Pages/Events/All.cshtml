@@ -1,0 +1,148 @@
+@page
+@model DruzabniDogodki.Pages.Events.AllModel
+@{
+    ViewData["Title"] = "Vsi dogodki";
+}
+
+<div class="container" style="max-width: 1150px;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h2 class="mb-1">📅 Vsi dogodki</h2>
+            <div class="text-secondary">Išči, filtriraj in poglej ocene dogodkov.</div>
+        </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Iskanje</label>
+                    <input name="Q" value="@Model.Q" class="form-control" placeholder="npr. koncert, tekma..." />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Kraj</label>
+                    <select name="LocationFilter" class="form-select">
+                        <option value="">Vsi kraji</option>
+                        @foreach (var loc in Model.Locations)
+                        {
+                            <option value="@loc" selected="@(loc == Model.LocationFilter)">
+                                @loc
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Od</label>
+                    <input type="date" name="From" class="form-control"
+                           value="@(Model.From.HasValue ? Model.From.Value.ToString("yyyy-MM-dd") : "")" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Do</label>
+                    <input type="date" name="To" class="form-control"
+                           value="@(Model.To.HasValue ? Model.To.Value.ToString("yyyy-MM-dd") : "")" />
+                </div>
+
+                <div class="col-md-1">
+                    <label class="form-label">Sort</label>
+                    <select name="Sort" class="form-select">
+                        <option value="date_asc" selected="@(Model.Sort=="date_asc")">Datum ↑</option>
+                        <option value="date_desc" selected="@(Model.Sort=="date_desc")">Datum ↓</option>
+                        <option value="title_asc" selected="@(Model.Sort=="title_asc")">A-Z</option>
+                        <option value="title_desc" selected="@(Model.Sort=="title_desc")">Z-A</option>
+                        <option value="rating_desc" selected="@(Model.Sort=="rating_desc")">⭐ Najboljše</option>
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary">🔎 Filtriraj</button>
+                    <a asp-page="/Events/All" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LIST -->
+    @if (!Model.Events.Any())
+    {
+        <div class="alert alert-light border">Ni najdenih dogodkov.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Dogodek</th>
+                            <th>Opis</th>
+                            <th>Datum</th>
+                            <th>Kraj</th>
+                            <th>Ocena</th>
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var e in Model.Events)
+                    {
+                        var desc = e.Description ?? "";
+                        var shortDesc = desc.Length > 80 ? desc.Substring(0, 80) + "..." : desc;
+
+                        <tr>
+                            <td class="fw-semibold">
+                                <a asp-page="/Events/Details" asp-route-id="@e.Id" class="text-decoration-none">
+                                    @e.Title
+                                </a>
+                            </td>
+
+                            <td style="max-width: 340px;">
+                                @if (string.IsNullOrWhiteSpace(desc))
+                                {
+                                    <span class="text-secondary">Ni opisa</span>
+                                }
+                                else
+                                {
+                                    <span>@shortDesc</span>
+                                }
+                            </td>
+
+                            <td class="text-nowrap">@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="text-nowrap">@e.Location</td>
+
+                            <td class="text-nowrap">
+                                @if (e.RatingCount == 0)
+                                {
+                                    <span class="text-secondary">Ni ocen</span>
+                                }
+                                else
+                                {
+                                    var rounded = (int)Math.Round(e.AvgRating, MidpointRounding.AwayFromZero);
+                                    <span class="text-warning">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= rounded) { <text>★</text>; }
+                                            else { <text>☆</text>; }
+                                        }
+                                    </span>
+                                    <span class="text-secondary small">
+                                        (@e.AvgRating.ToString("0.0") · @e.RatingCount)
+                                    </span>
+                                }
+                            </td>
+
+                            <td class="text-end text-nowrap">
+                                <a asp-page="/Events/Details" asp-route-id="@e.Id" class="btn btn-sm btn-outline-primary">
+                                    Podrobnosti →
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

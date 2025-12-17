@@ -1,0 +1,205 @@
+@page
+@model DruzabniDogodki.Pages.Events.DetailsModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Podrobnosti dogodka";
+}
+
+<div class="container mt-4" style="max-width: 950px;">
+    <a asp-page="/Events/All" class="btn btn-sm btn-outline-secondary mb-3">← Nazaj</a>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-start justify-content-between gap-3 flex-wrap">
+                <div>
+                    <h2 class="mb-2">@Model.Title</h2>
+
+                    <div class="text-secondary">
+                        <div>📅 <strong>Datum:</strong> @Model.EventDate.ToString("dd.MM.yyyy HH:mm")</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Location))
+                        {
+                            <div>📍 <strong>Kraj:</strong> @Model.Location</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- RATING SUMMARY -->
+                <div class="text-end">
+                    <div class="fw-semibold">⭐ Ocena</div>
+                    <div class="fs-5">
+                        @Model.AvgStars.ToString("0.0")
+                        <span class="text-secondary fs-6">(@Model.RatingsCount)</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <h5>Opis dogodka</h5>
+                <p class="mb-0">@Model.Description</p>
+            }
+            else
+            {
+                <p class="text-secondary mb-0">Ni opisa dogodka.</p>
+            }
+
+            @if (Model.Latitude != null && Model.Longitude != null)
+            {
+                <hr class="my-4" />
+                <h5 class="mb-2">🗺️ Lokacija dogodka</h5>
+                <div id="mapDetails" style="height: 360px;" class="border rounded"></div>
+            }
+
+            <hr class="my-4" />
+
+            @if (!string.IsNullOrEmpty(Model.Message))
+            {
+                <div class="alert alert-success">@Model.Message</div>
+            }
+            @if (!string.IsNullOrEmpty(Model.Error))
+            {
+                <div class="alert alert-danger">@Model.Error</div>
+            }
+
+            <!-- RESERVATION -->
+            @if (Model.IsLoggedIn)
+            {
+                <h5>🎫 Rezervacija</h5>
+
+                <form method="post" asp-page-handler="Reserve" class="mt-2">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <div class="mb-3" style="max-width: 220px;">
+                        <label class="form-label">Število kart</label>
+                        <input type="number" name="quantity" class="form-control" min="1" max="10" value="1" required />
+                        <div class="form-text">Max 10 kart.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success">Rezerviraj</button>
+                    <a asp-page="/Reservations/Index" class="btn btn-outline-primary ms-2">Moje rezervacije</a>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-info mb-0">
+                    Za rezervacijo se moraš prijaviti.
+                </div>
+            }
+
+            <hr class="my-4" />
+
+            <!-- USER RATING -->
+            <h5 class="mb-2">⭐ Oceni dogodek</h5>
+
+            @if (!Model.IsLoggedIn)
+            {
+                <div class="alert alert-light border mb-0">
+                    Za ocenjevanje se <a asp-page="/Login" class="alert-link">prijavi</a>.
+                </div>
+            }
+            else
+            {
+                <div class="text-secondary small mb-2">
+                    Tvoja ocena: <span class="fw-semibold">@(Model.UserStars?.ToString() ?? "še ni")</span>
+                </div>
+
+                <form method="post" asp-page-handler="Rate" class="d-flex flex-wrap gap-2 align-items-center">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <!-- 5 buttons -->
+                    @for (int s = 1; s <= 5; s++)
+                    {
+                        var isActive = Model.UserStars.HasValue && Model.UserStars.Value == s;
+                        <button type="submit"
+                                name="stars"
+                                value="@s"
+                                class="btn btn-sm @(isActive ? "btn-warning" : "btn-outline-warning")">
+                            @s ★
+                        </button>
+                    }
+
+                    <span class="text-secondary small ms-2">Klikni zvezdice za shranjevanje.</span>
+                </form>
+            }
+
+            <hr class="my-4" />
+
+            <!-- COMMENTS -->
+            <h5 class="mb-2">💬 Komentarji</h5>
+
+            @if (Model.IsLoggedIn)
+            {
+                <form method="post" asp-page-handler="AddComment" class="mb-3">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="mb-2">
+                        <textarea name="content" class="form-control" rows="3" placeholder="Napiši komentar..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Dodaj komentar</button>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-light border">
+                    Za komentiranje se <a asp-page="/Login" class="alert-link">prijavi</a>.
+                </div>
+            }
+
+            @if (!Model.Comments.Any())
+            {
+                <div class="text-secondary">Ni komentarjev.</div>
+            }
+            else
+            {
+                <div class="d-grid gap-2">
+                    @foreach (var c in Model.Comments)
+                    {
+                        <div class="border rounded p-3">
+                            <div class="d-flex justify-content-between gap-2 flex-wrap">
+                                <div class="fw-semibold">@c.UserName</div>
+                                <div class="text-secondary small">@c.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                            </div>
+
+                            <div class="mt-2">@c.Content</div>
+
+                            @if (c.CanDelete)
+                            {
+                                <form method="post"
+                                      asp-page-handler="DeleteComment"
+                                      class="mt-2"
+                                      onsubmit="return confirm('Izbrišem komentar?');">
+                                    <input type="hidden" name="eventId" value="@Model.Id" />
+                                    <input type="hidden" name="commentId" value="@c.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Izbriši</button>
+                                </form>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+@if (Model.Latitude != null && Model.Longitude != null)
+{
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const lat = @Model.Latitude.Value.ToString(CultureInfo.InvariantCulture);
+        const lng = @Model.Longitude.Value.ToString(CultureInfo.InvariantCulture);
+
+        const map = L.map('mapDetails').setView([lat, lng], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        L.marker([lat, lng]).addTo(map);
+    </script>
+}

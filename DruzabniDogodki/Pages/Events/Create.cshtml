@@ -4,32 +4,87 @@
     ViewData["Title"] = "Ustvari dogodek";
 }
 
-<h2>Ustvari nov dogodek</h2>
+<h2 class="mb-4">Ustvari nov dogodek</h2>
 
 <form method="post">
-    <div class="form-group">
-        <label asp-for="Event.Title"></label>
+    <div class="form-group mb-3">
+        <label asp-for="Event.Title" class="form-label">Naslov</label>
         <input asp-for="Event.Title" class="form-control" />
+        <span asp-validation-for="Event.Title" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Event.Description"></label>
-        <textarea asp-for="Event.Description" class="form-control"></textarea>
+    <div class="form-group mb-3">
+        <label asp-for="Event.Description" class="form-label">Opis</label>
+        <textarea asp-for="Event.Description" class="form-control" rows="4"></textarea>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Event.EventDate"></label>
+    <div class="form-group mb-3">
+        <label asp-for="Event.EventDate" class="form-label">Datum in ura</label>
         <input asp-for="Event.EventDate" type="datetime-local" class="form-control" />
+        <span asp-validation-for="Event.EventDate" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Event.Location"></label>
-        <input asp-for="Event.Location" class="form-control" />
+    <div class="form-group mb-3">
+        <label asp-for="Event.Location" class="form-label">Kraj</label>
+        <select asp-for="Event.Location" class="form-select">
+            <option value="">-- izberi kraj --</option>
+            @foreach (var l in Model.Locations)
+            {
+                <option value="@l">@l</option>
+            }
+        </select>
+        <span asp-validation-for="Event.Location" class="text-danger"></span>
+        <div class="form-text">Točna točka se izbere na mapi spodaj.</div>
     </div>
+
+    <input type="hidden" asp-for="Latitude" id="lat" />
+    <input type="hidden" asp-for="Longitude" id="lng" />
+
+    <div class="mb-2 fw-semibold">📍 Izberi točno lokacijo na mapi</div>
+    <div id="map" style="height: 360px;" class="border rounded mb-2"></div>
+    <div class="text-secondary small mb-3">Klikni na mapo, da postaviš marker.</div>
 
     <button type="submit" class="btn btn-primary">Shrani dogodek</button>
+
+    <div class="text-danger mt-3">
+        @Html.ValidationSummary()
+    </div>
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const map = L.map('map').setView([46.0569, 14.5058], 8);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        let marker = null;
+
+        const existingLat = document.getElementById('lat').value;
+        const existingLng = document.getElementById('lng').value;
+
+        if (existingLat && existingLng) {
+            const pos = L.latLng(parseFloat(existingLat), parseFloat(existingLng));
+            marker = L.marker(pos).addTo(map);
+            map.setView(pos, 14);
+        }
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+
+            document.getElementById('lat').value = lat;
+            document.getElementById('lng').value = lng;
+
+            if (marker) marker.setLatLng(e.latlng);
+            else marker = L.marker(e.latlng).addTo(map);
+        });
+    </script>
 }

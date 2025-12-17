@@ -1,0 +1,32 @@
+@page
+@model DruzabniDogodki.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "Moj profil";
+}
+
+<div class="container mt-5" style="max-width: 500px;">
+    <h2 class="mb-4">👤 Moj profil</h2>
+
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">Uporabniško ime</label>
+            <input asp-for="Username" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">E-mail</label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            💾 Shrani spremembe
+        </button>
+
+        @if (!string.IsNullOrEmpty(Model.Message))
+        {
+            <div class="alert alert-success mt-3">
+                @Model.Message
+            </div>
+        }
+    </form>
+</div>

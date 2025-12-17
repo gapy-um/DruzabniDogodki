@@ -1,15 +1,209 @@
 ﻿@page
 @model DruzabniDogodki.Pages.IndexModel
+@using System.Text.Json
+@using Microsoft.AspNetCore.Http
 @{
     ViewData["Title"] = "Družabni Dogodki – Domov";
+    var jsonDates = JsonSerializer.Serialize(Model.EventDates);
+
+    var role = HttpContext.Session.GetString("Role") ?? "User";
+    var isAdmin = role == "Admin";
+    var isLoggedIn = !string.IsNullOrEmpty(HttpContext.Session.GetString("UserName"));
 }
 
-<section class="main-content">
-    <h1>Dobrodošli v aplikaciji Družabni Dogodki</h1>
-    <p>
-        Organizirajte, ustvarjajte in delite svoje dogodke – preprosto in hitro.
-    </p>
-     <p>
-        <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
-    </p>
+<section class="py-4">
+    <div class="container" style="max-width: 1000px;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <div>
+                <h2 class="mb-1">Družabni Dogodki</h2>
+                <div class="text-secondary">
+                    Najdi dogodek, rezerviraj karto in pridi na točno lokacijo.
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a asp-page="/Events/All" class="btn btn-primary">Dogodki</a>
+
+                @if (isLoggedIn)
+                {
+                    <a asp-page="/Reservations/Index" class="btn btn-outline-primary">Moje rezervacije</a>
+                }
+
+                @if (isAdmin)
+                {
+                    <a asp-page="/Events/Create" class="btn btn-outline-secondary">+ Nov dogodek</a>
+                }
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-3 p-md-4">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                    <div>
+                        <h4 class="mb-0">📅 Koledar dogodkov</h4>
+                        <div class="text-secondary small">
+                            Dnevi z dogodki so označeni. Klikni dan za prikaz dogodkov.
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="prevMonth">←</button>
+                        <div class="fw-semibold" id="monthLabel"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="nextMonth">→</button>
+                    </div>
+                </div>
+
+                <div class="calendar">
+                    <div class="calendar-head">
+                        <div>Pon</div><div>Tor</div><div>Sre</div><div>Čet</div><div>Pet</div><div>Sob</div><div>Ned</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+
+                <div class="mt-3" id="selectedDayBox" style="display:none;">
+                    <div class="alert alert-info mb-0">
+                        <span class="fw-semibold" id="selectedDayText"></span>
+                        <span class="ms-2">
+                            <a asp-page="/Events/All" class="alert-link">Poglej dogodke</a>
+                        </span>
+                    </div>
+                </div>
+
+                @if (!isLoggedIn)
+                {
+                    <div class="alert alert-light border mt-3 mb-0">
+                        Za rezervacije se <a asp-page="/Login" class="alert-link">prijavi</a>.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </section>
+
+<style>
+    .calendar { user-select: none; }
+    .calendar-head {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: .5rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: .5rem;
+        font-size: .9rem;
+    }
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: .5rem;
+    }
+    .day {
+        border: 1px solid rgba(0,0,0,.1);
+        border-radius: .75rem;
+        padding: .75rem;
+        min-height: 64px;
+        cursor: pointer;
+        background: #fff;
+        transition: transform .05s ease-in-out;
+        position: relative;
+    }
+    .day:hover { transform: translateY(-1px); }
+    .day.muted { opacity: .35; cursor: default; }
+    .day .num { font-weight: 700; }
+    .day.has-event {
+        border-color: rgba(13,110,253,.5);
+        box-shadow: 0 0 0 .15rem rgba(13,110,253,.12);
+    }
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #0d6efd;
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+    .day.selected {
+        outline: 2px solid rgba(25,135,84,.6);
+        box-shadow: 0 0 0 .15rem rgba(25,135,84,.12);
+    }
+</style>
+
+<script>
+    const eventDays = new Set(@Html.Raw(jsonDates));
+
+    let current = new Date();
+    current.setDate(1);
+
+    const grid = document.getElementById("calendarGrid");
+    const label = document.getElementById("monthLabel");
+    const prevBtn = document.getElementById("prevMonth");
+    const nextBtn = document.getElementById("nextMonth");
+
+    const selectedBox = document.getElementById("selectedDayBox");
+    const selectedText = document.getElementById("selectedDayText");
+
+    function pad(n){ return String(n).padStart(2,'0'); }
+    function toKey(d){
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+
+    function render() {
+        grid.innerHTML = "";
+        selectedBox.style.display = "none";
+
+        const monthNames = ["Januar","Februar","Marec","April","Maj","Junij","Julij","Avgust","September","Oktober","November","December"];
+        label.textContent = `${monthNames[current.getMonth()]} ${current.getFullYear()}`;
+
+        const firstDay = new Date(current.getFullYear(), current.getMonth(), 1);
+        const jsDay = firstDay.getDay(); // 0..6
+        const mondayIndex = (jsDay + 6) % 7; // Mon=0..Sun=6
+
+        let start = new Date(firstDay);
+        start.setDate(1 - mondayIndex);
+
+        for (let i = 0; i < 42; i++) {
+            const d = new Date(start);
+            d.setDate(start.getDate() + i);
+
+            const inMonth = d.getMonth() === current.getMonth();
+            const key = toKey(d);
+
+            const cell = document.createElement("div");
+            cell.className = "day" + (inMonth ? "" : " muted");
+            cell.innerHTML = `<div class="num">${d.getDate()}</div>`;
+
+            if (eventDays.has(key)) {
+                cell.classList.add("has-event");
+                const dot = document.createElement("div");
+                dot.className = "dot";
+                cell.appendChild(dot);
+            }
+
+            if (inMonth) {
+                cell.addEventListener("click", () => {
+                    document.querySelectorAll(".day.selected").forEach(x => x.classList.remove("selected"));
+                    cell.classList.add("selected");
+
+                    if (eventDays.has(key)) selectedText.textContent = `Na ${key} je vsaj en dogodek.`;
+                    else selectedText.textContent = `Na ${key} ni označenih dogodkov.`;
+
+                    selectedBox.style.display = "block";
+                });
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    prevBtn.addEventListener("click", () => {
+        current = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+        render();
+    });
+
+    nextBtn.addEventListener("click", () => {
+        current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+        render();
+    });
+
+    render();
+</script>

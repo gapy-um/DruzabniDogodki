@@ -1,104 +1,178 @@
 @page
 @model DruzabniDogodki.Pages.Events.IndexModel
-
+@using System.Globalization
 @{
-    ViewData["Title"] = "Moji dogodki";
+    ViewData["Title"] = "Admin – dogodki";
 }
 
-<h2>Moji dogodki</h2>
+<div class="container mt-4" style="max-width: 1100px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">🛡️ Admin – dogodki</h2>
+        <a asp-page="/Events/Create" class="btn btn-primary">+ Nov dogodek</a>
+    </div>
 
-<p>
-    <a asp-page="/Events/Create" class="btn btn-primary">➕ Nov dogodek</a>
-</p>
+    <!-- FILTER BAR -->
+    <form method="get" class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Išči</label>
+                    <input type="text" name="q" value="@Model.Q" class="form-control" placeholder="Naslov ali opis..." />
+                </div>
 
-@if (!Model.Events.Any())
-{
-    <p>Trenutno nimaš nobenega dogodka.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Naslov</th>
-                <th>Datum</th>
-                <th>Lokacija</th>
-                <th>Akcije</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var e in Model.Events)
-        {
-            <tr>
-                <td>@e.Title</td>
-                <td>@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
-                <td>@e.Location</td>
-                <td>
-                    <!-- Gumb Uredi odpre modal -->
-                    <button type="button"
-                            class="btn btn-sm btn-secondary"
-                            data-bs-toggle="modal"
-                            data-bs-target="#editModal"
-                            data-id="@e.Id"
-                            data-title="@e.Title"
-                            data-description="@e.Description"
-                            data-date="@e.EventDate.ToString("yyyy-MM-ddTHH\\:mm")"
-                            data-location="@e.Location">
-                        Uredi
-                    </button>
+                <div class="col-md-3">
+                    <label class="form-label">Kraj</label>
+                    <select name="LocationFilter" class="form-select">
+                        <option value="">Vsi kraji</option>
+                        @foreach (var l in Model.Locations)
+                        {
+                            <option value="@l" selected="@(Model.LocationFilter == l)">
+                                @l
+                            </option>
+                        }
+                    </select>
+                </div>
 
-                    <!-- Gumb Izbriši pošlje POST na handler Delete -->
-                    <form method="post"
-                          asp-page-handler="Delete"
-                          asp-route-id="@e.Id"
-                          class="d-inline">
-                        <button type="submit"
-                                class="btn btn-sm btn-danger"
-                                onclick="return confirm('Res želiš izbrisati ta dogodek?');">
-                            Izbriši
+                <div class="col-md-2">
+                    <label class="form-label">Od</label>
+                    <input type="date" name="From" value="@(Model.From?.ToString("yyyy-MM-dd"))" class="form-control" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Do</label>
+                    <input type="date" name="To" value="@(Model.To?.ToString("yyyy-MM-dd"))" class="form-control" />
+                </div>
+
+                <div class="col-md-1">
+                    <label class="form-label">Sort</label>
+                    <select name="Sort" class="form-select">
+                        <option value="date_asc" selected="@(Model.Sort=="date_asc")">↑</option>
+                        <option value="date_desc" selected="@(Model.Sort=="date_desc")">↓</option>
+                        <option value="title_asc" selected="@(Model.Sort=="title_asc")">A-Z</option>
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button class="btn btn-outline-primary" type="submit">Filtriraj</button>
+                    <a asp-page="/Events/Index" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    @if (!Model.Events.Any())
+    {
+        <div class="alert alert-info">Ni dogodkov.</div>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Naslov</th>
+                    <th>Datum</th>
+                    <th>Kraj</th>
+                    <th>Owner</th>
+                    <th class="text-end">Akcije</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var e in Model.Events)
+            {
+                <tr>
+                    <td class="fw-semibold">
+                        <a asp-page="/Events/Details" asp-route-id="@e.Id" class="text-decoration-none">
+                            @e.Title
+                        </a>
+                    </td>
+                    <td>@e.EventDate.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@e.Location</td>
+                    <td class="text-secondary">@e.OwnerUserName</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button"
+                                class="btn btn-sm btn-secondary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal"
+                                data-id="@e.Id"
+                                data-title="@e.Title"
+                                data-description="@e.Description"
+                                data-date="@e.EventDate.ToString("yyyy-MM-ddTHH\\:mm")"
+                                data-location="@e.Location"
+                                data-lat="@(e.Latitude?.ToString(CultureInfo.InvariantCulture) ?? "")"
+                                data-lng="@(e.Longitude?.ToString(CultureInfo.InvariantCulture) ?? "")">
+                            Uredi
                         </button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+
+                        <form method="post"
+                              asp-page-handler="Delete"
+                              asp-route-id="@e.Id"
+                              class="d-inline">
+                            <button type="submit"
+                                    class="btn btn-sm btn-danger"
+                                    onclick="return confirm('Res želiš izbrisati ta dogodek?');">
+                                Izbriši
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
 
 <!-- EDIT MODAL -->
-<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="post" asp-page-handler="Edit">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="editModalLabel">Uredi dogodek</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zapri"></button>
+                    <h5 class="modal-title">Uredi dogodek</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
+
                 <div class="modal-body">
                     <input type="hidden" name="id" id="edit-id" />
 
-                    <div class="mb-3">
-                        <label for="edit-title" class="form-label">Naslov</label>
-                        <input type="text" class="form-control" id="edit-title" name="title" required />
-                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Naslov</label>
+                            <input type="text" class="form-control" id="edit-title" name="title" required />
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="edit-description" class="form-label">Opis</label>
-                        <textarea class="form-control" id="edit-description" name="description"></textarea>
-                    </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Datum in čas</label>
+                            <input type="datetime-local" class="form-control" id="edit-date" name="eventDate" required />
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="edit-date" class="form-label">Datum in čas</label>
-                        <input type="datetime-local" class="form-control" id="edit-date" name="eventDate" required />
-                    </div>
+                        <div class="col-12">
+                            <label class="form-label">Opis</label>
+                            <textarea class="form-control" id="edit-description" name="description" rows="3"></textarea>
+                        </div>
 
-                    <div class="mb-3">
-                        <label for="edit-location" class="form-label">Lokacija</label>
-                        <input type="text" class="form-control" id="edit-location" name="location" />
+                        <div class="col-md-6">
+                            <label class="form-label">Kraj</label>
+                            <select class="form-select" id="edit-location" name="location" required>
+                                <option value="">-- izberi kraj --</option>
+                                @foreach (var l in Model.Locations)
+                                {
+                                    <option value="@l">@l</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Točna lokacija (klikni na mapo)</label>
+                            <input type="hidden" name="latitude" id="edit-lat" />
+                            <input type="hidden" name="longitude" id="edit-lng" />
+                            <div id="editMap" class="border rounded" style="height: 280px;"></div>
+                            <div class="text-secondary small mt-1">Klikni na mapo za premik markerja.</div>
+                        </div>
                     </div>
                 </div>
+
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prekliči</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Prekliči</button>
                     <button type="submit" class="btn btn-primary">Shrani</button>
                 </div>
             </form>
@@ -107,8 +181,43 @@ else
 </div>
 
 @section Scripts {
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <script>
-        // Ko se modal odpre, napolnimo inpute z vrednostmi iz gumba
+        let editMap = null;
+        let editMarker = null;
+
+        function ensureMap(lat, lng) {
+            if (!editMap) {
+                editMap = L.map('editMap');
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(editMap);
+
+                editMap.on('click', function (e) {
+                    const la = e.latlng.lat;
+                    const ln = e.latlng.lng;
+
+                    document.getElementById('edit-lat').value = la;
+                    document.getElementById('edit-lng').value = ln;
+
+                    if (editMarker) editMarker.setLatLng(e.latlng);
+                    else editMarker = L.marker(e.latlng).addTo(editMap);
+                });
+            }
+
+            const pos = L.latLng(lat, lng);
+            editMap.setView(pos, 13);
+
+            if (editMarker) editMarker.setLatLng(pos);
+            else editMarker = L.marker(pos).addTo(editMap);
+
+            // Leaflet v modalu rabi invalidateSize
+            setTimeout(() => editMap.invalidateSize(), 200);
+        }
+
         var editModal = document.getElementById('editModal');
         editModal.addEventListener('show.bs.modal', function (event) {
             var button = event.relatedTarget;
@@ -118,12 +227,30 @@ else
             var description = button.getAttribute('data-description');
             var date = button.getAttribute('data-date');
             var location = button.getAttribute('data-location');
+            var lat = button.getAttribute('data-lat');
+            var lng = button.getAttribute('data-lng');
 
             document.getElementById('edit-id').value = id;
             document.getElementById('edit-title').value = title;
             document.getElementById('edit-description').value = description || '';
             document.getElementById('edit-date').value = date;
-            document.getElementById('edit-location').value = location || '';
+
+            // select location
+            const sel = document.getElementById('edit-location');
+            sel.value = location || "";
+
+            // fallback coords if missing
+            const la = lat ? parseFloat(lat) : 46.0569;
+            const ln = lng ? parseFloat(lng) : 14.5058;
+
+            document.getElementById('edit-lat').value = la;
+            document.getElementById('edit-lng').value = ln;
+
+            ensureMap(la, ln);
+        });
+
+        editModal.addEventListener('hidden.bs.modal', function () {
+            // optional: nič
         });
     </script>
 }
