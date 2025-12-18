@@ -36,7 +36,7 @@ namespace DruzabniDogodki.Pages.Events
                 return RedirectToPage("/Login");
 
             var isAdminStr = HttpContext.Session.GetString("IsAdmin");
-            IsAdmin = bool.TryParse(isAdminStr, out var isAdmin) && isAdmin;
+            IsAdmin = bool.TryParse(isAdminStr, out var isAdminValue) && isAdminValue;
 
             Query = q;
             Sort = string.IsNullOrWhiteSpace(sort) ? "date" : sort.ToLowerInvariant();
